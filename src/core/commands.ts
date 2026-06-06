@@ -62,7 +62,7 @@ export function commands(
   capabilities: CapabilityStore,
   tags: SessionTagStore,
   tree: SidebarProvider,
-  modelSelection: ModelSelectionStore,
+  _modelSelection: ModelSelectionStore,
 ) {
   ctx.subscriptions.push(
     vscode.commands.registerCommand("opencode-ui.refresh", async () => {
