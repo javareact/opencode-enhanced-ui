@@ -1065,7 +1065,7 @@
   border: 1px solid color-mix(in srgb, var(--oc-palette-action-border) 76%, transparent 24%);
   border-radius: calc(var(--oc-radius-sm) + 2px);
   background: var(--oc-palette-action-bg);
-  color: var(--oc-accent);
+  color: var(--oc-palette-action-fg);
   box-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent 92%);
   cursor: pointer;
   pointer-events: auto;
@@ -1116,8 +1116,8 @@
 }
 
 .oc-composerPrimaryAction svg {
-  width: 13px;
-  height: 13px;
+  width: 18px;
+  height: 18px;
   display: block;
 }
 
