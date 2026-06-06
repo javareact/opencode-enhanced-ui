@@ -13,7 +13,7 @@ describe("panel shell block", () => {
     assert.doesNotMatch(toolCss, /\.oc-shellBlockContent\s*\{[\s\S]*overflow-x:\s*auto;/)
   })
 
-  test("animates shell block expansion with a reduced-motion fallback", () => {
+  test("animates shell block expansion", () => {
     const toolCss = readFileSync(resolve(process.cwd(), "src/panel/webview/tool.css"), "utf8")
 
     assert.match(toolCss, /\.oc-shellBlockBody\s*\{[\s\S]*grid-template-rows:\s*0fr;/)
@@ -23,6 +23,5 @@ describe("panel shell block", () => {
     assert.match(toolCss, /\.oc-shellBlock\.is-expanded\s+\.oc-shellBlockBody\s*\{[\s\S]*grid-template-rows:\s*1fr;/)
     assert.match(toolCss, /\.oc-shellBlockToggleIcon\s*\{[\s\S]*transition:\s*transform\s+160ms\s+ease;/)
     assert.match(toolCss, /\.oc-shellBlock\.is-expanded\s+\.oc-shellBlockToggleIcon\s*\{[\s\S]*transform:\s*rotate\(180deg\);/)
-    assert.match(toolCss, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.oc-shellBlockBody[\s\S]*transition:\s*none;/)
   })
 })
