@@ -28,11 +28,11 @@ export async function activate(ctx: vscode.ExtensionContext) {
   mgr = workspaceMgr
   const events = new EventHub(workspaceMgr, out)
   const sessions = new SessionStore(workspaceMgr, events, out)
-  const panels = new SessionPanelManager(ctx.extensionUri, workspaceMgr, events, out)
+  const modelSelection = new ModelSelectionStore(ctx.globalState)
+  const panels = new SessionPanelManager(ctx.extensionUri, workspaceMgr, events, out, modelSelection)
   const tabs = new TabManager(panels)
   const focused = new FocusedSessionStore(workspaceMgr, panels, events, out)
   const tags = new SessionTagStore(ctx.workspaceState)
-  const modelSelection = new ModelSelectionStore(ctx.globalState)
   const capabilities = new CapabilityStore({
     probe: async (workspaceId) => {
       const rt = workspaceMgr.get(workspaceId)
