@@ -681,18 +681,14 @@ export function App() {
         composerHydratedMessageID: latestUserSelection.messageID,
       }
     })
-  }, [latestUserSelection])
-
-  React.useEffect(() => {
-    if (state.composerModelOverrides && Object.keys(state.composerModelOverrides).length > 0) {
-      const lastSelectedModel = Object.values(state.composerModelOverrides)[0]
+    if (latestUserSelection.model) {
       vscode.postMessage({
         type: "modelSelectionChanged",
-        lastSelectedModel,
-        recentModels: state.composerRecentModels,
+        lastSelectedModel: latestUserSelection.model,
+        recentModels: pushRecentModel(state.composerRecentModels, latestUserSelection.model),
       })
     }
-  }, [state.composerModelOverrides, state.composerRecentModels])
+  }, [latestUserSelection])
 
   React.useEffect(() => {
     if (!modelPickerOpen && !themePickerOpen && !sessionPickerOpen) {
@@ -1137,7 +1133,12 @@ export function App() {
       }
     })
     setModelPickerOpen(false)
-  }, [])
+    vscode.postMessage({
+      type: "modelSelectionChanged",
+      lastSelectedModel: model,
+      recentModels: pushRecentModel(state.composerRecentModels, model),
+    })
+  }, [state.composerRecentModels])
 
   const toggleComposerFavorite = React.useCallback((model: { providerID: string; modelID: string }) => {
     setState((current) => ({
