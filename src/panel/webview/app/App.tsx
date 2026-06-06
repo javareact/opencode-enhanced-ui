@@ -3,7 +3,7 @@ import type { ComposerPathResult, ComposerPromptPart, SessionBootstrap } from ".
 import type { QuestionRequest, SessionMessage } from "../../../core/sdk"
 import { ChildMessagesContext, ChildSessionsContext, WorkspaceDirContext } from "./contexts"
 import { answerKey, PermissionDock, QuestionDock, RetryStatus, SubagentFooter, SubagentNavigation } from "./docks"
-import { createInitialState, persistableAppState, resolvePanelColorSchemeValue, resolvePanelThemeValue, type AppState, type ComposerEditorPart, type ComposerModelRef, type ImageAttachment, type InitialWebviewState, type PersistedAppState, type VsCodeApi } from "./state"
+import { createInitialState, persistableAppState, resolvePanelColorSchemeValue, resolvePanelThemeValue, type AppState, type ComposerEditorPart, type ImageAttachment, type InitialWebviewState, type PersistedAppState, type VsCodeApi } from "./state"
 import { Timeline } from "./timeline"
 import { AgentBadge, CompactionDivider, EmptyState, FileRefText, MarkdownBlock, PartView, WebviewBindingsProvider } from "./webview-bindings"
 import { ensureComposerCursorVisible, resizeComposer, useComposerResize } from "../hooks/useComposer"
@@ -60,14 +60,8 @@ function sameAutocompleteMatch(
   return !!left && !!right && left.trigger === right.trigger && left.query === right.query && left.start === right.start && left.end === right.end
 }
 
-type GlobalModelSelection = {
-  lastSelectedModel?: ComposerModelRef
-  recentModels?: ComposerModelRef[]
-}
-
 export function App() {
-  const [globalModelSelection, setGlobalModelSelection] = React.useState<GlobalModelSelection>({})
-  const [state, setState] = React.useState(() => createInitialState(initialRef, persistedState, initialWebviewState.display, globalModelSelection))
+  const [state, setState] = React.useState(() => createInitialState(initialRef, persistedState, initialWebviewState.display))
   const [composerMode, setComposerMode] = React.useState<ComposerMode>("normal")
   const [composing, setComposing] = React.useState(false)
   const [composerFocused, setComposerFocused] = React.useState(false)
@@ -611,23 +605,6 @@ export function App() {
     setState,
     vscode,
   })
-
-  React.useEffect(() => {
-    const handler = (event: MessageEvent) => {
-      const message = event.data
-      if (message?.type !== "modelSelectionInit") {
-        return
-      }
-
-      setGlobalModelSelection({
-        lastSelectedModel: message.lastModel,
-        recentModels: message.recentModels,
-      })
-    }
-
-    window.addEventListener("message", handler)
-    return () => window.removeEventListener("message", handler)
-  }, [])
 
   React.useEffect(() => {
     setState((current) => {

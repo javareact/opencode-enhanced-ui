@@ -142,6 +142,21 @@ export function dispatchHostMessage(message: HostMessage, handlers: {
     return
   }
 
+  if (message?.type === "modelSelectionInit") {
+    handlers.setState((current) => {
+      const nextOverrides = { ...current.composerModelOverrides }
+      if (message.lastModel) {
+        nextOverrides["build"] = message.lastModel
+      }
+      return {
+        ...current,
+        composerModelOverrides: nextOverrides,
+        composerRecentModels: Array.isArray(message.recentModels) ? message.recentModels : current.composerRecentModels,
+      }
+    })
+    return
+  }
+
   if (message?.type === "mcpActionFinished") {
     handlers.setPendingMcpActions((current) => {
       if (!current[message.name]) {
