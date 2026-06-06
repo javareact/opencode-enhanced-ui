@@ -191,6 +191,7 @@ export class SessionPanelManager implements vscode.Disposable {
           this.setActive(undefined)
         }
       },
+      this.modelSelection,
     )
     this.panels.set(key, controller)
     if (panel.active) {

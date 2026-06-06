@@ -4,6 +4,7 @@ import * as vscode from "vscode"
 
 import type { HostMessage, SessionSnapshot } from "../../bridge/types"
 import type { PermissionRequest, QuestionRequest, SessionEvent, SessionInfo, SessionMessage } from "../../core/sdk"
+import type { ModelSelectionStore } from "../../core/model-selection-store"
 import { preserveIncrementalTranscript, SessionPanelController } from "./controller"
 import { panelTitle } from "./utils"
 
@@ -137,7 +138,7 @@ async function handle(controller: SessionPanelController, event: SessionEvent) {
   await (controller as any).handle(event)
 }
 
-function createWebviewMessageHarness(rt: Record<string, unknown>) {
+function createWebviewMessageHarness(rt: Record<string, unknown>, modelSelection?: ModelSelectionStore) {
   let onMessage: ((message: unknown) => void) | undefined
   const posted: unknown[] = []
   const panel = {
@@ -183,6 +184,7 @@ function createWebviewMessageHarness(rt: Record<string, unknown>) {
     } as any,
     () => {},
     () => {},
+    modelSelection,
   )
 
   return {
@@ -965,6 +967,45 @@ describe("SessionPanelController.actionContext", () => {
     assert.deepEqual(posted.at(-1), {
       type: "focusComposer",
     })
+  })
+
+  test("sends modelSelectionInit to webview on ready when modelSelection store is available", async () => {
+    const lastModel = { providerID: "openai", modelID: "gpt-4o" }
+    const recentModels = [
+      { providerID: "openai", modelID: "gpt-4o" },
+      { providerID: "anthropic", modelID: "claude-sonnet-4-20250514" },
+    ]
+    const modelSelection = {
+      getLastSelectedModel: () => lastModel,
+      getRecentModels: () => recentModels,
+    } as unknown as ModelSelectionStore
+
+    const { controller, posted, send } = createWebviewMessageHarness(
+      { state: "ready", dir: "/workspace", sdk: {} },
+      modelSelection,
+    )
+
+    send({ type: "ready" })
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    const initMsg = posted.find((m: any) => m.type === "modelSelectionInit")
+    assert.ok(initMsg, "expected modelSelectionInit message to be posted")
+    assert.deepEqual((initMsg as any).lastModel, lastModel)
+    assert.deepEqual((initMsg as any).recentModels, recentModels)
+    controller.dispose()
+  })
+
+  test("does not send modelSelectionInit when modelSelection store is not available", async () => {
+    const { controller, posted, send } = createWebviewMessageHarness(
+      { state: "ready", dir: "/workspace", sdk: {} },
+    )
+
+    send({ type: "ready" })
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    const initMsg = posted.find((m: any) => m.type === "modelSelectionInit")
+    assert.equal(initMsg, undefined, "expected no modelSelectionInit message")
+    controller.dispose()
   })
 
   test("syncSubmitting updates current state and posts submitting transport", async () => {

@@ -160,6 +160,17 @@ export type HostMessage =
       type: "imagePreviewCommand"
       action: "copy" | "save"
     }
+  | {
+      type: "modelSelectionInit"
+      lastModel?: {
+        providerID: string
+        modelID: string
+      }
+      recentModels: Array<{
+        providerID: string
+        modelID: string
+      }>
+    }
 
 export type ComposerPromptPart =
   | {
