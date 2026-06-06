@@ -6,6 +6,7 @@ import { checkOpencodeAvailable, runtimeNotReadyMessage } from "./runtime-errors
 import { ClearSearchItem, ClearTagFilterItem, SessionItem, WorkspaceItem } from "../sidebar/item"
 import type { WorkspaceRuntime } from "./server"
 import { parseSessionTagsInput, SessionTagStore } from "./session-tags"
+import { ModelSelectionStore } from "./model-selection-store"
 import { SessionStore } from "./session"
 import { displaySessionTitle, isDefaultNewSessionTitle } from "./session-titles"
 import { TabManager } from "./tabs"
@@ -61,6 +62,7 @@ export function commands(
   capabilities: CapabilityStore,
   tags: SessionTagStore,
   tree: SidebarProvider,
+  modelSelection: ModelSelectionStore,
 ) {
   ctx.subscriptions.push(
     vscode.commands.registerCommand("opencode-ui.refresh", async () => {
