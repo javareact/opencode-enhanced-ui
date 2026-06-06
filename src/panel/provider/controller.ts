@@ -203,6 +203,13 @@ export class SessionPanelController implements vscode.Disposable {
         if (message?.type === "runShellCommand") {
           void runShellCommand(this.actionContext(), message.command, message.agent, message.model, message.variant)
         }
+
+        if (message?.type === "modelSelectionChanged") {
+          void this.modelSelection?.updateAll({
+            lastSelectedModel: message.lastSelectedModel,
+            recentModels: message.recentModels,
+          })
+        }
       },
       undefined,
       this.bag,

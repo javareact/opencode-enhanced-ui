@@ -330,3 +330,14 @@ export type WebviewMessage =
   | {
       type: "loadEarlierMessages"
     }
+  | {
+      type: "modelSelectionChanged"
+      lastSelectedModel?: {
+        providerID: string
+        modelID: string
+      }
+      recentModels: Array<{
+        providerID: string
+        modelID: string
+      }>
+    }
