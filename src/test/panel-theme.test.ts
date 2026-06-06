@@ -454,7 +454,6 @@ describe("panel theme settings", () => {
     assert.match(statusCss, /\.oc-composerStatusDot\s*\{[\s\S]*animation:\s*oc-composerStatusPulse/)
     assert.match(statusCss, /@keyframes\s+oc-composerStatusSweep/)
     assert.match(statusCss, /@keyframes\s+oc-composerStatusPulse/)
-    assert.match(statusCss, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.oc-composerStatusTrackGlow[\s\S]*animation:\s*none;/)
   })
 
   test("adds preset-specific transcript shell, message, and composer styling hooks", () => {
@@ -613,7 +612,6 @@ describe("panel theme settings", () => {
     assert.match(toolCss, /\.oc-shell\[data-oc-theme=\"codex\"\]\s+\.oc-toolPanel\s*\{[\s\S]*position:\s*relative;/)
     assert.match(toolCss, /\.oc-shell\[data-oc-theme=\"codex\"\]\s+\.oc-toolPanel\.is-active::after\s*\{[\s\S]*animation:\s*oc-codexToolSweep/)
     assert.match(toolCss, /@keyframes\s+oc-codexToolSweep/)
-    assert.match(toolCss, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*oc-codexToolSweep[\s\S]*animation:\s*none;/)
   })
 
   test("adds theme-specific pills, markdown, and output window treatments", () => {

@@ -142,9 +142,29 @@ export type PersistedAppState = {
   commandPromptInvocations?: CommandPromptCatalog
 }
 
-export function createInitialState(initialRef: SessionBootstrap["sessionRef"] | null, persisted?: PersistedAppState, initialDisplay?: DisplaySettings): AppState {
+export function createInitialState(
+  initialRef: SessionBootstrap["sessionRef"] | null,
+  persisted?: PersistedAppState,
+  initialDisplay?: DisplaySettings,
+  globalModelSelection?: {
+    lastSelectedModel?: ComposerModelRef
+    recentModels?: ComposerModelRef[]
+  }
+): AppState {
   const sameSession = samePersistedSession(initialRef, persisted)
   const display = initialDisplaySettings(initialDisplay)
+
+  let modelOverrides: Record<string, ComposerModelRef> = {}
+  if (sameSession) {
+    modelOverrides = normalizeModelMap(persisted?.composerModelOverrides)
+  } else if (globalModelSelection?.lastSelectedModel) {
+    modelOverrides = { "build": globalModelSelection.lastSelectedModel }
+  }
+
+  const recentModels = sameSession
+    ? normalizeModelList(persisted?.composerRecentModels)
+    : normalizeModelList(globalModelSelection?.recentModels)
+
   return {
     bootstrap: {
       status: "loading",
@@ -194,8 +214,8 @@ export function createInitialState(initialRef: SessionBootstrap["sessionRef"] | 
     composerMentions: [],
     composerAgentOverride: sameSession ? persisted?.composerAgentOverride : undefined,
     composerMentionAgentOverride: undefined,
-    composerModelOverrides: sameSession ? normalizeModelMap(persisted?.composerModelOverrides) : {},
-    composerRecentModels: sameSession ? normalizeModelList(persisted?.composerRecentModels) : [],
+    composerModelOverrides: modelOverrides,
+    composerRecentModels: recentModels,
     composerFavoriteModels: normalizeModelList(persisted?.composerFavoriteModels),
     composerModelVariants: sameSession ? normalizeVariantMap(persisted?.composerModelVariants) : {},
     composerHydratedMessageID: undefined,

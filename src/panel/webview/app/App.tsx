@@ -684,6 +684,17 @@ export function App() {
   }, [latestUserSelection])
 
   React.useEffect(() => {
+    if (state.composerModelOverrides && Object.keys(state.composerModelOverrides).length > 0) {
+      const lastSelectedModel = Object.values(state.composerModelOverrides)[0]
+      vscode.postMessage({
+        type: "modelSelectionChanged",
+        lastSelectedModel,
+        recentModels: state.composerRecentModels,
+      })
+    }
+  }, [state.composerModelOverrides, state.composerRecentModels])
+
+  React.useEffect(() => {
     if (!modelPickerOpen && !themePickerOpen && !sessionPickerOpen) {
       return
     }

@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import { SESSION_PANEL_VIEW_TYPE, type ComposerPromptPart, type SessionPanelRef } from "../../bridge/types"
 import { EventHub } from "../../core/events"
+import { ModelSelectionStore } from "../../core/model-selection-store"
 import { WorkspaceManager } from "../../core/workspace"
 import { sessionPanelHtml } from "../html"
 import { SessionPanelController } from "./controller"
@@ -18,6 +19,7 @@ export class SessionPanelManager implements vscode.Disposable {
     private mgr: WorkspaceManager,
     private events: EventHub,
     private out: vscode.OutputChannel,
+    private modelSelection?: ModelSelectionStore,
   ) {}
 
   async open(ref: SessionPanelRef, viewColumn?: vscode.ViewColumn) {
@@ -189,6 +191,7 @@ export class SessionPanelManager implements vscode.Disposable {
           this.setActive(undefined)
         }
       },
+      this.modelSelection,
     )
     this.panels.set(key, controller)
     if (panel.active) {

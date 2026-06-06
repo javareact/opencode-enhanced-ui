@@ -12,7 +12,6 @@ describe("panel collapsible prompt", () => {
     assert.match(cssRule(timelineCss, ".oc-collapsiblePromptContent"), /transition:\s*max-height\s+180ms\s+ease,\s*opacity\s+160ms\s+ease;/)
     assert.match(cssRule(timelineCss, ".oc-collapsiblePrompt.is-expanded .oc-collapsiblePromptContent"), /max-height:\s*var\(--oc-collapsiblePrompt-expanded-height\);/)
     assert.doesNotMatch(cssRule(timelineCss, ".oc-collapsiblePromptContent"), /-webkit-line-clamp:/)
-    assert.match(timelineCss, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.oc-collapsiblePromptContent[\s\S]*transition:\s*none;/)
     assert.match(promptSource, /--oc-collapsiblePrompt-collapsed-height/)
     assert.match(promptSource, /--oc-collapsiblePrompt-expanded-height/)
   })

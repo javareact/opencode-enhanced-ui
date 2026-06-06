@@ -53,6 +53,10 @@ describe("extension icon assets", () => {
   test("session panels use the png tab icon asset", () => {
     const iconPath = panelIconPath(vscode.Uri.file(repoRoot))
     assert.ok("fsPath" in iconPath)
-    assert.equal(iconPath.fsPath, path.join(repoRoot, "images", "tab.png"))
+    const expectedPath = path.join(repoRoot, "images", "tab.png")
+    assert.equal(
+      iconPath.fsPath.replace(/\\/g, "/"),
+      expectedPath.replace(/\\/g, "/"),
+    )
   })
 })

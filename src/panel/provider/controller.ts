@@ -2,6 +2,7 @@ import * as vscode from "vscode"
 import { postToWebview } from "../../bridge/host"
 import type { ComposerPromptPart, HostMessage, SessionPanelRef, SessionSnapshot, WebviewMessage } from "../../bridge/types"
 import { affectsDisplaySettings, updatePanelColorScheme, updatePanelTheme } from "../../core/settings"
+import type { ModelSelectionStore } from "../../core/model-selection-store"
 import { EventHub } from "../../core/events"
 import type { SessionEvent } from "../../core/sdk"
 import { WorkspaceManager } from "../../core/workspace"
@@ -45,6 +46,7 @@ export class SessionPanelController implements vscode.Disposable {
     private out: vscode.OutputChannel,
     private onActive: (ref: SessionPanelRef | undefined) => void,
     private onDispose: (key: string) => void,
+    private modelSelection?: ModelSelectionStore,
   ) {
     this.ref = ref
     this.key = key
@@ -61,6 +63,7 @@ export class SessionPanelController implements vscode.Disposable {
             await this.push(false, "webview:ready")
             await this.flushSeedComposer()
             await this.flushComposerFocus()
+            await this.flushModelSelectionInit()
           })()
           return
         }
@@ -199,6 +202,13 @@ export class SessionPanelController implements vscode.Disposable {
 
         if (message?.type === "runShellCommand") {
           void runShellCommand(this.actionContext(), message.command, message.agent, message.model, message.variant)
+        }
+
+        if (message?.type === "modelSelectionChanged") {
+          void this.modelSelection?.updateAll({
+            lastSelectedModel: message.lastSelectedModel,
+            recentModels: message.recentModels,
+          })
         }
       },
       undefined,
@@ -447,6 +457,18 @@ export class SessionPanelController implements vscode.Disposable {
     this.pendingComposerFocus = false
     await postToWebview(this.panel.webview, {
       type: "focusComposer",
+    })
+  }
+
+  private async flushModelSelectionInit() {
+    if (this.state.disposed || !this.ready || !this.modelSelection) {
+      return
+    }
+
+    await postToWebview(this.panel.webview, {
+      type: "modelSelectionInit",
+      lastModel: this.modelSelection.getLastSelectedModel(),
+      recentModels: this.modelSelection.getRecentModels(),
     })
   }
 

@@ -5,6 +5,7 @@ import { commands } from "./core/commands"
 import { EventHub } from "./core/events"
 import { affectsHttpProxySetting, proxyRestartMessage } from "./core/settings"
 import { OpenCodeStatusBar } from "./core/status-bar"
+import { ModelSelectionStore } from "./core/model-selection-store"
 import { SessionTagStore } from "./core/session-tags"
 import { SessionStore } from "./core/session"
 import { TabManager } from "./core/tabs"
@@ -27,7 +28,8 @@ export async function activate(ctx: vscode.ExtensionContext) {
   mgr = workspaceMgr
   const events = new EventHub(workspaceMgr, out)
   const sessions = new SessionStore(workspaceMgr, events, out)
-  const panels = new SessionPanelManager(ctx.extensionUri, workspaceMgr, events, out)
+  const modelSelection = new ModelSelectionStore(ctx.globalState)
+  const panels = new SessionPanelManager(ctx.extensionUri, workspaceMgr, events, out, modelSelection)
   const tabs = new TabManager(panels)
   const focused = new FocusedSessionStore(workspaceMgr, panels, events, out)
   const tags = new SessionTagStore(ctx.workspaceState)
@@ -92,7 +94,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
     new SessionPanelSerializer(panels),
   )
 
-  commands(ctx, workspaceMgr, sessions, out, tabs, panels, capabilities, tags, tree)
+  commands(ctx, workspaceMgr, sessions, out, tabs, panels, capabilities, tags, tree, modelSelection)
 
   ctx.subscriptions.push(out, workspaceMgr, sessions, events, panels, focused, capabilities, statusBar, tree, todoView, diffView, subagentsView, sessionView, treeView, treeSelectionReg, treeActiveSyncReg, treeVisibilityReg, todoReg, diffReg, subagentsReg, sessionViewReg, serializer)
   out.appendLine("OpenCode UI activated")

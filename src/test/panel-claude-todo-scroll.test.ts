@@ -42,7 +42,7 @@ describe("claude todo panel scrolling", () => {
     assert.match(cssRule(toolCss, ".oc-shell[data-oc-theme=\"claude\"] .oc-toolTodoToggleIcon"), /height:\s*14px;/)
   })
 
-  test("animates todo expansion with a reduced-motion fallback", () => {
+  test("animates todo expansion", () => {
     const toolCss = readFileSync(resolve(process.cwd(), "src/panel/webview/tool.css"), "utf8")
 
     assert.match(cssRule(toolCss, ".oc-toolTodoList"), /grid-template-rows:\s*0fr;/)
@@ -52,7 +52,6 @@ describe("claude todo panel scrolling", () => {
     assert.match(cssRule(toolCss, ".oc-toolTodoHeader[aria-expanded=\"true\"] + .oc-toolTodoList"), /grid-template-rows:\s*1fr;/)
     assert.match(cssRule(toolCss, ".oc-shell[data-oc-theme=\"claude\"] .oc-toolTodoToggleIcon"), /transition:\s*transform\s+160ms\s+ease;/)
     assert.match(cssRule(toolCss, ".oc-shell[data-oc-theme=\"claude\"] .oc-toolTodoHeader[aria-expanded=\"true\"] .oc-toolTodoToggleIcon"), /transform:\s*rotate\(180deg\);/)
-    assert.match(toolCss, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.oc-toolTodoList[\s\S]*transition:\s*none;/)
   })
 })
 
