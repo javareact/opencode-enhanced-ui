@@ -1,2 +1,2 @@
 [test]
-preload = ["./src/test/preload-vscode.ts"]
+preload = ["./src/test/preload-happy-dom.ts", "./src/test/preload-vscode.ts"]
