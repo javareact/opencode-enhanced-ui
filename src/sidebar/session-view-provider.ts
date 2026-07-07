@@ -22,6 +22,7 @@ export class SessionViewProvider implements vscode.WebviewViewProvider, vscode.D
   private current: SessionSnapshot | undefined
   private currentRef: SessionPanelRef | undefined
   private refreshSeq = 0
+  private autoResolving = false
   private deferredDirty = {
     sessionStatus: false,
     permissions: false,
@@ -113,16 +114,17 @@ export class SessionViewProvider implements vscode.WebviewViewProvider, vscode.D
   }
 
   private async autoResolve() {
-    if (this.currentRef || this.state.disposed) {
+    if (this.currentRef || this.state.disposed || this.autoResolving) {
       return
     }
 
-    const rt = this.mgr.list().find((r) => r.state === "ready" && r.sdk)
-    if (!rt || !rt.sdk) {
-      return
-    }
-
+    this.autoResolving = true
     try {
+      const rt = this.mgr.list().find((r) => r.state === "ready" && r.sdk)
+      if (!rt || !rt.sdk) {
+        return
+      }
+
       const res = await rt.sdk.session.list({ directory: rt.dir, roots: true })
       if (this.currentRef || this.state.disposed) {
         return
@@ -148,6 +150,8 @@ export class SessionViewProvider implements vscode.WebviewViewProvider, vscode.D
       this.switchSession({ workspaceId: rt.workspaceId, dir: rt.dir, sessionId })
     } catch (err) {
       this.log(`autoResolve failed: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      this.autoResolving = false
     }
   }
 
