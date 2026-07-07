@@ -167,7 +167,10 @@ export async function runSlashCommand(ctx: ActionContext, command: string, args:
   await ctx.syncSubmitting()
 
   try {
-    await rt.sdk.session.command({
+    // Fire without awaiting. The session.command endpoint blocks until the
+    // AI completes, which can hang indefinitely for long-running processes.
+    // The event stream handles UI updates.
+    rt.sdk.session.command({
       sessionID: ctx.ref.sessionId,
       directory: rt.dir,
       command,
@@ -176,13 +179,17 @@ export async function runSlashCommand(ctx: ActionContext, command: string, args:
       agent,
       model,
       variant,
+    }).catch((err) => {
+      if (ctx.state.disposed || run !== ctx.state.run) {
+        return
+      }
+      const message = textError(err)
+      ctx.log(`slash command failed: ${command} ${message}`)
+      void vscode.window.showErrorMessage(`OpenCode command /${command} failed for ${rt.name}: ${message}`)
+      void fail(ctx.panel.webview, message)
     })
+
     await wait(400)
-  } catch (err) {
-    const message = textError(err)
-    ctx.log(`slash command failed: ${command} ${message}`)
-    await vscode.window.showErrorMessage(`OpenCode command /${command} failed for ${rt.name}: ${message}`)
-    await fail(ctx.panel.webview, message)
   } finally {
     ctx.state.pendingSubmitCount = Math.max(0, ctx.state.pendingSubmitCount - 1)
     if (!ctx.state.disposed && run === ctx.state.run) {
@@ -207,25 +214,27 @@ export async function runShellCommand(ctx: ActionContext, command: string, agent
   await ctx.syncSubmitting()
 
   try {
-    await rt.sdk.session.shell({
+    // Fire without awaiting. The session.shell endpoint blocks until the AI
+    // completes, which can hang indefinitely for long-running processes.
+    // Exit shell mode immediately and rely on the event stream for updates.
+    rt.sdk.session.shell({
       sessionID: ctx.ref.sessionId,
       directory: rt.dir,
       command,
       agent,
       model: model ? { providerID: model.providerID, modelID: model.modelID } : undefined,
+    }).catch((err) => {
+      if (ctx.state.disposed || run !== ctx.state.run) {
+        return
+      }
+      const rawMessage = textError(err)
+      const message = friendlyShellSubmitError(rawMessage)
+      ctx.log(`shell command failed: ${rawMessage}`)
+      void vscode.window.showErrorMessage(message)
     })
 
     ctx.panel.webview.postMessage({ type: "shellCommandSucceeded" })
     await wait(400)
-  } catch (err) {
-    const rawMessage = textError(err)
-    const message = friendlyShellSubmitError(rawMessage)
-    ctx.log(`shell command failed: ${rawMessage}`)
-    ctx.panel.webview.postMessage({
-      type: "restoreComposer",
-      parts: [{ type: "text", text: command }],
-    })
-    await vscode.window.showErrorMessage(message)
   } finally {
     ctx.state.pendingSubmitCount = Math.max(0, ctx.state.pendingSubmitCount - 1)
     if (!ctx.state.disposed && run === ctx.state.run) {

@@ -329,6 +329,60 @@ describe("provider actions submitting", () => {
     assert.deepEqual(posted, [{ type: "shellCommandSucceeded" }])
   })
 
+  test("runShellCommand does not block when shell call never resolves", async () => {
+    const { ctx, posted, syncStates } = createContext({
+      shell: () => new Promise(() => {}),
+    })
+
+    await runShellCommand(ctx, "npm run dev", "builder")
+
+    assert.deepEqual(syncStates, [true, false])
+    assert.equal(ctx.state.pendingSubmitCount, 0)
+    assert.deepEqual(posted, [{ type: "shellCommandSucceeded" }])
+  })
+
+  test("runShellCommand handles shell rejection without throwing", async () => {
+    const { ctx, posted, syncStates } = createContext({
+      shell: async () => {
+        throw new Error("session is busy")
+      },
+    })
+
+    await withImmediateTimeout(async () => {
+      await runShellCommand(ctx, "bun test")
+    })
+
+    assert.deepEqual(syncStates, [true, false])
+    assert.equal(ctx.state.pendingSubmitCount, 0)
+    assert.deepEqual(posted, [{ type: "shellCommandSucceeded" }])
+  })
+
+  test("runSlashCommand does not block when command call never resolves", async () => {
+    const { ctx, syncStates } = createContext({
+      command: () => new Promise(() => {}),
+    })
+
+    await runSlashCommand(ctx, "review", "src/panel", "planner", "gpt-5", "safe")
+
+    assert.deepEqual(syncStates, [true, false])
+    assert.equal(ctx.state.pendingSubmitCount, 0)
+  })
+
+  test("runSlashCommand handles command rejection without throwing", async () => {
+    const { ctx, syncStates } = createContext({
+      command: async () => {
+        throw new Error("session is busy")
+      },
+    })
+
+    await withImmediateTimeout(async () => {
+      await runSlashCommand(ctx, "review", "src/panel")
+    })
+
+    assert.deepEqual(syncStates, [true, false])
+    assert.equal(ctx.state.pendingSubmitCount, 0)
+  })
+
   test("submit clears submitting and posts error on failure", async () => {
     const { ctx, posted, syncStates } = createContext({
       promptAsync: async () => {
