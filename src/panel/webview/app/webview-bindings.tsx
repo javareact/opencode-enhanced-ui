@@ -31,10 +31,11 @@ import { QuestionBlock } from "./docks"
 const WebviewBindingsContext = React.createContext<{ fileRefStatus: Map<string, boolean>; vscode: VsCodeApi } | null>(null)
 
 export function WebviewBindingsProvider({ fileRefStatus, vscode, children }: { fileRefStatus: Map<string, boolean>; vscode: VsCodeApi; children: React.ReactNode }) {
-  return <WebviewBindingsContext.Provider value={{ fileRefStatus, vscode }}>{children}</WebviewBindingsContext.Provider>
+  const value = React.useMemo(() => ({ fileRefStatus, vscode }), [fileRefStatus, vscode])
+  return <WebviewBindingsContext.Provider value={value}>{children}</WebviewBindingsContext.Provider>
 }
 
-function useWebviewBindings() {
+export function useWebviewBindings() {
   const value = React.useContext(WebviewBindingsContext)
   if (!value) {
     throw new Error("WebviewBindingsProvider missing")
