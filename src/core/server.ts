@@ -1,6 +1,8 @@
 import * as cp from "node:child_process"
+import * as fs from "node:fs"
 import * as net from "node:net"
-import { getHttpProxy, getOpencodePath } from "./settings"
+import * as path from "node:path"
+import { getHttpProxy, getOpencodePath, getShellPath } from "./settings"
 import type { Client, SessionInfo, SessionStatus } from "./sdk"
 
 export type RuntimeState = "starting" | "ready" | "error" | "stopped" | "stopping"
@@ -126,6 +128,57 @@ export function resolveOpencodeCommand(configured: string) {
   return trimmed.length > 0 ? trimmed : "opencode"
 }
 
+export function resolveShell(
+  platform: NodeJS.Platform,
+  env: NodeJS.ProcessEnv,
+  configuredShellPath: string,
+  gitBashPath: string | undefined,
+): string | undefined {
+  const trimmed = configuredShellPath.trim()
+  if (trimmed.length > 0) {
+    return trimmed
+  }
+
+  if (env.SHELL) {
+    return undefined
+  }
+
+  if (platform === "win32" && gitBashPath) {
+    return gitBashPath
+  }
+
+  return undefined
+}
+
+const GIT_BASH_COMMON_PATHS = [
+  "C:\\Program Files\\Git\\bin\\bash.exe",
+  "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+  "C:\\Program Files (x86)\\Git\\bin\\bash.exe",
+  "C:\\Program Files (x86)\\Git\\usr\\bin\\bash.exe",
+]
+
+export function findGitBash(): string | undefined {
+  for (const candidate of GIT_BASH_COMMON_PATHS) {
+    if (fs.existsSync(candidate)) {
+      return candidate
+    }
+  }
+
+  const pathDirs = (process.env.PATH || "").split(path.delimiter)
+  for (const dir of pathDirs) {
+    if (!dir) {
+      continue
+    }
+
+    const candidate = path.join(dir, "bash.exe")
+    if (fs.existsSync(candidate)) {
+      return candidate
+    }
+  }
+
+  return undefined
+}
+
 export function spawn(dir: string, port: number) {
   const env: NodeJS.ProcessEnv = {
     ...process.env,
@@ -140,6 +193,16 @@ export function spawn(dir: string, port: number) {
     env.https_proxy = proxy
   } else {
     clearEmptyProxyEnv(env)
+  }
+
+  const shell = resolveShell(
+    process.platform,
+    env,
+    getShellPath(),
+    process.platform === "win32" ? findGitBash() : undefined,
+  )
+  if (shell) {
+    env.SHELL = shell
   }
 
   const command = resolveOpencodeCommand(getOpencodePath())

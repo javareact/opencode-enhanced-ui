@@ -376,6 +376,12 @@
           "default": "",
           "description": "Absolute path to the opencode executable used to launch opencode serve. Leave empty to look up opencode on PATH. Useful when opencode is installed to a custom location. Requires editor restart to take effect.",
           "scope": "machine-overridable"
+        },
+        "opencode-ui.shellPath": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to the shell used by opencode for command execution (e.g. Git Bash on Windows). On Windows, when left empty, the extension auto-detects Git Bash and falls back to the system default (PowerShell). On Linux/macOS the existing SHELL is preserved. Requires editor restart to take effect.",
+          "scope": "machine-overridable"
         }
       }
     },

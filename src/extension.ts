@@ -3,7 +3,7 @@ import { SESSION_PANEL_VIEW_TYPE } from "./bridge/types"
 import { CapabilityStore, createEmptyCapabilities, probeRuntimeCapabilities } from "./core/capabilities"
 import { commands } from "./core/commands"
 import { EventHub } from "./core/events"
-import { affectsHttpProxySetting, proxyRestartMessage } from "./core/settings"
+import { affectsHttpProxySetting, affectsShellPathSetting, proxyRestartMessage } from "./core/settings"
 import { OpenCodeStatusBar } from "./core/status-bar"
 import { ModelSelectionStore } from "./core/model-selection-store"
 import { SessionTagStore } from "./core/session-tags"
@@ -106,7 +106,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
 
   ctx.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(async (event) => {
-      if (!affectsHttpProxySetting(event)) {
+      if (!affectsHttpProxySetting(event) && !affectsShellPathSetting(event)) {
         return
       }
 

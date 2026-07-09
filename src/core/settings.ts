@@ -18,6 +18,7 @@ const SECTION = "opencode-ui"
 
 export const HTTP_PROXY_KEY = "httpProxy"
 export const OPENCODE_PATH_KEY = "opencodePath"
+export const SHELL_PATH_KEY = "shellPath"
 export const SHOW_INTERNALS_KEY = "showInternals"
 export const SHOW_THINKING_KEY = "showThinking"
 export const DIFF_MODE_KEY = "diffMode"
@@ -42,6 +43,11 @@ export function getDisplaySettings(): DisplaySettings {
 export function getOpencodePath() {
   const config = vscode.workspace.getConfiguration(SECTION)
   return config.get<string>(OPENCODE_PATH_KEY, "").trim()
+}
+
+export function getShellPath() {
+  const config = vscode.workspace.getConfiguration(SECTION)
+  return config.get<string>(SHELL_PATH_KEY, "").trim()
 }
 
 export function getHttpProxy() {
@@ -72,6 +78,10 @@ export function affectsDisplaySettings(event: vscode.ConfigurationChangeEvent) {
 export function affectsHttpProxySetting(event: vscode.ConfigurationChangeEvent) {
   return event.affectsConfiguration(`${SECTION}.${HTTP_PROXY_KEY}`)
     || event.affectsConfiguration("http.proxy")
+}
+
+export function affectsShellPathSetting(event: vscode.ConfigurationChangeEvent) {
+  return event.affectsConfiguration(`${SECTION}.${SHELL_PATH_KEY}`)
 }
 
 export async function updatePanelTheme(theme: PanelTheme) {

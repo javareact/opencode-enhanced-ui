@@ -193,6 +193,7 @@ Access settings via `OpenCode: Open Settings` or search for "OpenCode" in VS Cod
 ### Network Settings
 - **HTTP Proxy** (`opencode-ui.httpProxy`) - Configure HTTP proxy for opencode serve (requires restart)
 - **OpenCode Path** (`opencode-ui.opencodePath`) - Absolute path to the opencode executable when it lives outside `PATH` (requires restart)
+- **Shell Path** (`opencode-ui.shellPath`) - Absolute path to the shell for opencode command execution. On Windows, auto-detects Git Bash and falls back to PowerShell when empty. On Linux/macOS the existing `SHELL` is preserved (requires restart)
 
 ## Tips & Tricks 💡
 
