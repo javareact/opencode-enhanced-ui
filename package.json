@@ -502,7 +502,14 @@
           "group": "inline@1"
         }
       ]
-    }
+    },
+    "keybindings": [
+      {
+        "command": "opencode-ui.askSelection",
+        "key": "alt+k",
+        "when": "editorTextFocus"
+      }
+    ]
   },
   "packageManager": "bun@1.3.10"
 }
