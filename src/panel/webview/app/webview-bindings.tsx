@@ -1,7 +1,7 @@
 import React from "react"
 import type { MessagePart } from "../../../core/sdk"
 import { PartView as BasePartView, ToolPartView as BaseToolPartView } from "./part-views"
-import { useChildMessages, useChildSessions, useTranscriptVisibility, useWorkspaceDir } from "./contexts"
+import { useChildMessages, useChildSessions, useTranscriptVisibility, useWorkspaceDir, useBashToolActions } from "./contexts"
 import { SkillPill } from "./skill-pill"
 import { findSkillLocation, type EmptyStateTip } from "./timeline"
 import { renderToolRowExtra, renderToolRowTitle, taskAgentName, taskBody, taskSessionTitle, toolRowExtras } from "./tool-row-meta"
@@ -81,8 +81,12 @@ export function ToolRow({ part, active = false }: { part: Extract<MessagePart, {
   }
 
   const workspaceDir = useWorkspaceDir()
+  const { onKill, onDetach } = useBashToolActions()
   const extras = toolRowExtras(part)
-  return <BaseToolRow ToolStatus={ToolStatus} active={active} isMcpTool={isMcpTool} part={part} renderToolRowExtra={(current, item) => renderToolRowExtra(current, item, FileRefText)} renderToolRowTitle={(current) => renderToolRowTitle(current, toolDetails(current), { FileRefText, renderLspToolTitle: renderInlineLspToolTitle, workspaceDir })} extras={extras} toolLabel={toolLabel} />
+  const command = typeof part.state?.input === "object" && part.state?.input !== null
+    ? String((part.state.input as Record<string, unknown>).command ?? "")
+    : ""
+  return <BaseToolRow ToolStatus={ToolStatus} active={active} isMcpTool={isMcpTool} part={part} renderToolRowExtra={(current, item) => renderToolRowExtra(current, item, FileRefText)} renderToolRowTitle={(current) => renderToolRowTitle(current, toolDetails(current), { FileRefText, renderLspToolTitle: renderInlineLspToolTitle, workspaceDir })} extras={extras} toolLabel={toolLabel} onKill={onKill ?? undefined} onDetach={onDetach && command ? () => onDetach({ command, messageID: part.messageID }) : undefined} />
 }
 
 export function SkillToolRow({ part, active = false }: { part: Extract<MessagePart, { type: "tool" }>; active?: boolean }) {
@@ -128,6 +132,10 @@ export function ToolShellPanel({ part, active = false }: { part: Extract<Message
   const details = toolDetails(part)
   const body = toolTextBody(part)
   const status = part.state?.status || "pending"
+  const { onKill, onDetach } = useBashToolActions()
+  const command = typeof part.state?.input === "object" && part.state?.input !== null
+    ? String((part.state.input as Record<string, unknown>).command ?? "")
+    : ""
   return (
     <BaseCollapsibleShellBlock
       ToolStatus={ToolStatus}
@@ -136,6 +144,8 @@ export function ToolShellPanel({ part, active = false }: { part: Extract<Message
       running={status === "running"}
       body={body}
       className={active ? "is-active" : ""}
+      onKill={onKill ?? undefined}
+      onDetach={onDetach && command ? () => onDetach({ command, messageID: part.messageID }) : undefined}
     />
   )
 }

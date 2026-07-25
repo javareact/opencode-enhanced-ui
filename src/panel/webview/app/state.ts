@@ -1,4 +1,4 @@
-import type { ComposerFileSelection, ComposerPathKind, SessionBootstrap, SessionMessageHistory, SessionPickerPayload, SessionSnapshot, SkillCatalogEntry } from "../../../bridge/types"
+import type { ComposerFileSelection, ComposerPathKind, PtySessionInfo, SessionBootstrap, SessionMessageHistory, SessionPickerPayload, SessionSnapshot, SkillCatalogEntry } from "../../../bridge/types"
 import type { DisplaySettings, PanelColorScheme, PanelTheme } from "../../../core/settings"
 import type { AgentInfo, CommandInfo, FileDiff, FormatterStatus, LspStatus, McpResource, McpStatus, MessageInfo, PermissionRequest, ProviderAuthMethod, ProviderInfo, QuestionRequest, SessionInfo, SessionMessage, SessionStatus, Todo } from "../../../core/sdk"
 import type { CommandPromptCatalog, CommandPromptInvocation } from "./command-prompt"
@@ -123,6 +123,7 @@ export type AppState = {
   imageAttachments: ImageAttachment[]
   error: string
   form: FormState
+  ptySessions: PtySessionInfo[]
 }
 
 export type InitialWebviewState = {
@@ -228,6 +229,7 @@ export function createInitialState(
       custom: {},
       reject: {},
     },
+    ptySessions: [],
   }
 }
 

@@ -4,7 +4,7 @@ import * as vscode from "vscode"
 
 import type { SessionMessage } from "../../core/sdk"
 import type { SkillCatalogEntry } from "../../bridge/types"
-import { buildSessionPickerPayload, providerAuthAction, restoredPromptPartsFromMessage, runComposerAction, runMcpAction, runShellCommand, runSlashCommand, submit } from "./actions"
+import { buildSessionPickerPayload, detachBashTool, providerAuthAction, restoredPromptPartsFromMessage, runComposerAction, runMcpAction, runShellCommand, runSlashCommand, stopPty, submit } from "./actions"
 
 const WRAPPED_SKILL_OUTPUT = `<skill_content name="using-superpowers">
 # Skill: using-superpowers
@@ -67,6 +67,9 @@ function createContext(overrides?: {
   mcpAuthenticate?: (input: unknown) => Promise<unknown>
   mcpRemoveAuth?: (input: unknown) => Promise<unknown>
   skills?: (input: unknown) => Promise<{ data?: Array<{ name: string; description: string; location: string; content: string }> }>
+  ptyCreate?: (input: unknown) => Promise<unknown>
+  ptyRemove?: (input: unknown) => Promise<unknown>
+  ptyList?: (input: unknown) => Promise<{ data?: unknown[] }>
 }): {
   ctx: Parameters<typeof submit>[0]
   posted: unknown[]
@@ -105,6 +108,11 @@ function createContext(overrides?: {
       },
       app: {
         skills: overrides?.skills ?? (async () => ({ data: [] })),
+      },
+      pty: {
+        create: overrides?.ptyCreate ?? (async () => ({ data: undefined })),
+        remove: overrides?.ptyRemove ?? (async () => ({ data: undefined })),
+        list: overrides?.ptyList ?? (async () => ({ data: [] })),
       },
     },
   }
@@ -563,6 +571,67 @@ describe("provider actions submitting", () => {
       directory: "/workspace",
     })
     assert.deepEqual(posted, [{ type: "mcpActionFinished", name: "docs" }])
+  })
+
+  test("detachBashTool calls session.abort then pty.create with correct command", async () => {
+    let abortCalled = false
+    let ptyPayload: unknown
+    const { ctx } = createContext({
+      abort: async () => { abortCalled = true; return { data: true } },
+      ptyCreate: async (input) => { ptyPayload = input; return { data: { id: "pty-1", title: "yarn dev", command: "yarn dev", args: [], cwd: "/workspace", status: "running", pid: 123 } } },
+    })
+
+    await withImmediateTimeout(async () => {
+      await detachBashTool(ctx, "yarn dev", "msg-1")
+    })
+
+    assert.equal(abortCalled, true)
+    assert.deepEqual(ptyPayload, {
+      command: "yarn dev",
+      cwd: "/workspace",
+      title: "yarn dev",
+    })
+  })
+
+  test("detachBashTool handles session.abort failure gracefully", async () => {
+    let ptyCalled = false
+    const { ctx } = createContext({
+      abort: async () => { throw new Error("abort failed") },
+      ptyCreate: async () => { ptyCalled = true; return { data: { id: "pty-1", title: "", command: "", args: [], cwd: "", status: "running", pid: 0 } } },
+    })
+
+    await withImmediateTimeout(async () => {
+      await detachBashTool(ctx, "yarn dev", "msg-1")
+    })
+
+    assert.equal(ptyCalled, true)
+  })
+
+  test("detachBashTool handles pty.create failure gracefully", async () => {
+    const { ctx } = createContext({
+      abort: async () => { return { data: true } },
+      ptyCreate: async () => { throw new Error("pty create failed") },
+    })
+
+    await withImmediateTimeout(async () => {
+      await detachBashTool(ctx, "yarn dev", "msg-1")
+    })
+  })
+
+  test("stopPty calls pty.remove with correct ptyID", async () => {
+    let removePayload: unknown
+    const { ctx } = createContext({
+      ptyRemove: async (input) => { removePayload = input; return { data: true } },
+    })
+
+    await withImmediateTimeout(async () => {
+      await stopPty(ctx, "pty-123")
+    })
+
+    assert.deepEqual(removePayload, {
+      ptyID: "pty-123",
+      directory: "/workspace",
+    })
   })
 })
 

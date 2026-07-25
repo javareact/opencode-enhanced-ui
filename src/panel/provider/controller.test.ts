@@ -105,11 +105,12 @@ function createHarness(current: SessionSnapshot, incrementalReady = true): Harne
   controller.extensionUri = { path: "/extension", fsPath: "/extension", toString: () => "/extension" }
   controller.ref = current.sessionRef
   controller.panel = { title: panelTitle(current.session?.title || current.sessionRef.sessionId) }
-  controller.deferredDirty = {
-    sessionStatus: false,
-    permissions: false,
-    questions: false,
-  }
+controller.deferredDirty = {
+sessionStatus: false,
+permissions: false,
+questions: false,
+}
+controller.ptySessions = new Map()
   controller.state = {
     disposed: false,
     run: 0,

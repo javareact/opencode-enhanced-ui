@@ -157,6 +157,14 @@ export function dispatchHostMessage(message: HostMessage, handlers: {
     return
   }
 
+  if (message?.type === "ptyUpdate") {
+    handlers.setState((current) => ({
+      ...current,
+      ptySessions: message.sessions,
+    }))
+    return
+  }
+
   if (message?.type === "mcpActionFinished") {
     handlers.setPendingMcpActions((current) => {
       if (!current[message.name]) {

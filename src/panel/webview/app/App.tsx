@@ -1,11 +1,13 @@
 import React from "react"
 import type { ComposerPathResult, ComposerPromptPart, SessionBootstrap } from "../../../bridge/types"
 import type { QuestionRequest, SessionMessage } from "../../../core/sdk"
-import { ChildMessagesContext, ChildSessionsContext, WorkspaceDirContext } from "./contexts"
+import { ChildMessagesContext, ChildSessionsContext, WorkspaceDirContext, BashToolActionsContext } from "./contexts"
 import { answerKey, PermissionDock, QuestionDock, RetryStatus, SubagentFooter, SubagentNavigation } from "./docks"
 import { createInitialState, persistableAppState, resolvePanelColorSchemeValue, resolvePanelThemeValue, type AppState, type ComposerEditorPart, type ImageAttachment, type InitialWebviewState, type PersistedAppState, type VsCodeApi } from "./state"
 import { Timeline } from "./timeline"
 import { AgentBadge, CompactionDivider, EmptyState, FileRefText, MarkdownBlock, PartView, WebviewBindingsProvider } from "./webview-bindings"
+import { BackgroundCommandBar } from "./background-command-bar"
+import { useRunningBashTools } from "./background-commands"
 import { ensureComposerCursorVisible, resizeComposer, useComposerResize } from "../hooks/useComposer"
 import { filterItems, matchAutocomplete, useComposerAutocomplete, type ComposerAutocompleteItem, type ComposerAutocompleteState } from "../hooks/useComposerAutocomplete"
 import { useHostMessages } from "../hooks/useHostMessages"
@@ -605,6 +607,21 @@ export function App() {
     setState,
     vscode,
   })
+
+  const { tools: runningBashTools, hasOvertime } = useRunningBashTools(state.snapshot.messages)
+  const onKillBashTool = React.useCallback(() => {
+    vscode.postMessage({ type: "composerAction", action: "interruptSession" })
+  }, [vscode])
+  const onDetachBashTool = React.useCallback((tool: { command: string; messageID: string }) => {
+    vscode.postMessage({ type: "detachBashTool", command: tool.command, messageID: tool.messageID })
+  }, [vscode])
+  const onStopPty = React.useCallback((ptyID: string) => {
+    vscode.postMessage({ type: "stopPty", ptyID })
+  }, [vscode])
+  const bashToolActions = React.useMemo(() => ({
+    onKill: onKillBashTool,
+    onDetach: onDetachBashTool,
+  }), [onKillBashTool, onDetachBashTool])
 
   React.useEffect(() => {
     setState((current) => {
@@ -1639,6 +1656,7 @@ export function App() {
       <ChildMessagesContext.Provider value={state.snapshot.childMessages}>
         <ChildSessionsContext.Provider value={state.snapshot.childSessions}>
           <WebviewBindingsProvider fileRefStatus={fileRefStatus} vscode={vscode}>
+            <BashToolActionsContext.Provider value={bashToolActions}>
             <div className="oc-shell" data-oc-theme={panelTheme} data-oc-color={resolvePanelColorSchemeValue(state.snapshot.display.panelColorScheme)}>
               <main ref={timelineRef} className="oc-transcript">
                 <div className="oc-transcriptInner">
@@ -1676,6 +1694,14 @@ export function App() {
 
               <footer className="oc-footer">
                 <div className="oc-transcriptInner oc-footerInner">
+            <BackgroundCommandBar
+              tools={runningBashTools}
+              hasOvertime={hasOvertime}
+              ptySessions={state.ptySessions}
+              onKill={onKillBashTool}
+              onDetach={onDetachBashTool}
+              onStopPty={onStopPty}
+            />
             {!timelineScroll.isAtBottom ? (
               <button
                 type="button"
@@ -2207,6 +2233,7 @@ export function App() {
               />
             ) : null}
           </div>
+            </BashToolActionsContext.Provider>
           </WebviewBindingsProvider>
         </ChildSessionsContext.Provider>
       </ChildMessagesContext.Provider>

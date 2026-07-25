@@ -30,3 +30,12 @@ export function useChildSessions() {
 export function useTranscriptVisibility() {
   return React.useContext(TranscriptVisibilityContext)
 }
+
+export const BashToolActionsContext = React.createContext<{
+  onKill: (() => void) | null
+  onDetach: ((tool: { command: string; messageID: string }) => void) | null
+}>({ onKill: null, onDetach: null })
+
+export function useBashToolActions() {
+  return React.useContext(BashToolActionsContext)
+}

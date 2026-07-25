@@ -1325,3 +1325,135 @@ button.oc-toolTodoHeader {
   line-height: 1.58;
 }
 
+/* Background command bar */
+.oc-backgroundCommandBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+.oc-backgroundCommandBar.is-overtime {
+  animation: oc-backgroundPulse 2s ease-in-out infinite;
+}
+
+@keyframes oc-backgroundPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.oc-backgroundCommandBarInner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.oc-backgroundCommandBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.oc-backgroundCommandBadgeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.7;
+}
+
+.oc-backgroundCommandSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.oc-backgroundCommandSectionPty {
+  padding-left: 8px;
+  border-left: 1px solid var(--oc-color-border, rgba(128, 128, 128, 0.3));
+}
+
+.oc-backgroundCommandItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--oc-color-chipBg, rgba(128, 128, 128, 0.12));
+}
+
+.oc-backgroundCommandText {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 11px;
+}
+
+.oc-backgroundCommandStop,
+.oc-backgroundCommandDetach,
+.oc-toolRowKill,
+.oc-toolRowDetach {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 3px;
+  opacity: 0.6;
+}
+
+.oc-backgroundCommandStop:hover,
+.oc-backgroundCommandDetach:hover,
+.oc-toolRowKill:hover,
+.oc-toolRowDetach:hover {
+  opacity: 1;
+  background: var(--oc-color-hoverBg, rgba(128, 128, 128, 0.15));
+}
+
+.oc-backgroundCommandStop svg,
+.oc-backgroundCommandDetach svg,
+.oc-toolRowKill svg,
+.oc-toolRowDetach svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.oc-backgroundCommandStopPath,
+.oc-toolRowKillPath {
+  fill: currentColor;
+  stroke: none;
+}
+
+.oc-backgroundCommandDetachPath,
+.oc-toolRowDetachPath {
+  fill: none;
+  stroke: currentColor;
+}
+
+.oc-toolRowKill,
+.oc-toolRowDetach {
+  margin-left: 2px;
+}
+
+.oc-shellBlockHeaderMeta .oc-toolRowKill,
+.oc-shellBlockHeaderMeta .oc-toolRowDetach {
+  margin-left: 4px;
+}

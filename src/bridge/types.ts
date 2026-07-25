@@ -98,6 +98,15 @@ export type SessionPickerPayload = {
   items: SessionPickerItem[]
 }
 
+export type PtySessionInfo = {
+  id: string
+  title: string
+  command: string
+  cwd: string
+  status: "running" | "exited"
+  pid: number
+}
+
 export type HostMessage =
   | {
       type: "bootstrap"
@@ -170,6 +179,10 @@ export type HostMessage =
         providerID: string
         modelID: string
       }>
+    }
+  | {
+      type: "ptyUpdate"
+      sessions: PtySessionInfo[]
     }
 
 export type ComposerPromptPart =
@@ -340,4 +353,13 @@ export type WebviewMessage =
         providerID: string
         modelID: string
       }>
+    }
+  | {
+      type: "detachBashTool"
+      command: string
+      messageID: string
+    }
+  | {
+      type: "stopPty"
+      ptyID: string
     }

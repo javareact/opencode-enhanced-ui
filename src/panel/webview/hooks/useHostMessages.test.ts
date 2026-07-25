@@ -649,4 +649,35 @@ describe("dispatchHostMessage", () => {
     assert.equal(state.snapshot.messages[0]?.parts[0]?.type === "text" ? state.snapshot.messages[0].parts[0].text : undefined, "before after")
     assert.equal(state.snapshot.session?.title, "session-1 renamed")
   })
+
+  test("dispatches ptyUpdate to state.ptySessions", () => {
+    const fileRefStatus = new Map<string, boolean>()
+    let resultState: AppState | undefined
+    const initialState = createInitialState(null)
+
+    dispatchHostMessage({
+      type: "ptyUpdate",
+      sessions: [{
+        id: "pty-1",
+        title: "yarn dev",
+        command: "yarn dev",
+        cwd: "/workspace",
+        status: "running",
+        pid: 12345,
+      }],
+    } satisfies HostMessage, {
+      fileRefStatus,
+      onFileSearchResults: () => {},
+      onFocusComposer: () => {},
+      onRestoreComposer: () => {},
+      onShellCommandSucceeded: () => {},
+      setPendingMcpActions: (() => {}) as Dispatch<SetStateAction<Record<string, boolean>>>,
+      setState: ((update: SetStateAction<AppState>) => {
+        resultState = typeof update === "function" ? (update as (c: AppState) => AppState)(initialState) : update
+      }) as Dispatch<SetStateAction<AppState>>,
+    })
+
+    assert.equal(resultState?.ptySessions.length, 1)
+    assert.equal(resultState?.ptySessions[0]?.id, "pty-1")
+  })
 })

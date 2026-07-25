@@ -243,6 +243,64 @@ export async function runShellCommand(ctx: ActionContext, command: string, agent
   }
 }
 
+export async function detachBashTool(ctx: ActionContext, command: string, _messageID: string) {
+  if (!command.trim() || ctx.state.disposed) {
+    return
+  }
+
+  const rt = ctx.mgr.get(ctx.ref.workspaceId)
+  if (!rt || rt.state !== "ready" || !rt.sdk) {
+    await fail(ctx.panel.webview, "Workspace server is not ready.")
+    return
+  }
+
+  try {
+    await rt.sdk.session.abort({
+      sessionID: ctx.ref.sessionId,
+      directory: rt.dir,
+    })
+  } catch (err) {
+    ctx.log(`detachBashTool: session.abort failed: ${textError(err)}`)
+  }
+
+  await wait(300)
+
+  try {
+    await rt.sdk.pty.create({
+      command,
+      cwd: rt.dir,
+      title: command,
+    } as Parameters<typeof rt.sdk.pty.create>[0])
+  } catch (err) {
+    ctx.log(`detachBashTool: pty.create failed: ${textError(err)}`)
+    void vscode.window.showErrorMessage(`Failed to start background command: ${textError(err)}`)
+  }
+
+  await ctx.push(true)
+}
+
+export async function stopPty(ctx: ActionContext, ptyID: string) {
+  if (!ptyID || ctx.state.disposed) {
+    return
+  }
+
+  const rt = ctx.mgr.get(ctx.ref.workspaceId)
+  if (!rt || rt.state !== "ready" || !rt.sdk) {
+    await fail(ctx.panel.webview, "Workspace server is not ready.")
+    return
+  }
+
+  try {
+    await rt.sdk.pty.remove({
+      ptyID,
+      directory: rt.dir,
+    })
+  } catch (err) {
+    ctx.log(`stopPty: pty.remove failed: ${textError(err)}`)
+    void vscode.window.showErrorMessage(`Failed to stop background command: ${textError(err)}`)
+  }
+}
+
 export function buildSessionPickerPayload(input: {
   workspaceName: string
   currentSessionId: string

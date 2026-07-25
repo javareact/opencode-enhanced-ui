@@ -1,12 +1,12 @@
 import * as vscode from "vscode"
 import { postToWebview } from "../../bridge/host"
-import type { ComposerPromptPart, HostMessage, SessionPanelRef, SessionSnapshot, WebviewMessage } from "../../bridge/types"
+import type { ComposerPromptPart, HostMessage, PtySessionInfo, SessionPanelRef, SessionSnapshot, WebviewMessage } from "../../bridge/types"
 import { affectsDisplaySettings, updatePanelColorScheme, updatePanelTheme } from "../../core/settings"
 import type { ModelSelectionStore } from "../../core/model-selection-store"
 import { EventHub } from "../../core/events"
 import type { SessionEvent } from "../../core/sdk"
 import { WorkspaceManager } from "../../core/workspace"
-import { providerAuthAction, rejectQuestion, replyPermission, replyQuestion, runComposerAction, runMcpAction, runShellCommand, runSlashCommand, submit, type PanelActionState } from "./actions"
+import { providerAuthAction, rejectQuestion, replyPermission, replyQuestion, runComposerAction, runMcpAction, runShellCommand, runSlashCommand, submit, detachBashTool, stopPty, type PanelActionState } from "./actions"
 import { openFile, resolveFileRefs, searchFiles } from "./files"
 import { needsRefresh, reduce } from "./reducer"
 import { buildSessionSnapshot, DEFAULT_SESSION_MESSAGE_LIMIT, patch } from "./snapshot"
@@ -29,6 +29,7 @@ export class SessionPanelController implements vscode.Disposable {
     permissions: false,
     questions: false,
   }
+  private ptySessions: Map<string, PtySessionInfo> = new Map()
   private readonly bag: vscode.Disposable[] = []
   private readonly state: PanelActionState = {
     disposed: false,
@@ -64,6 +65,7 @@ export class SessionPanelController implements vscode.Disposable {
             await this.flushSeedComposer()
             await this.flushComposerFocus()
             await this.flushModelSelectionInit()
+            await this.syncPtySessions()
           })()
           return
         }
@@ -202,6 +204,17 @@ export class SessionPanelController implements vscode.Disposable {
 
         if (message?.type === "runShellCommand") {
           void runShellCommand(this.actionContext(), message.command, message.agent, message.model, message.variant)
+          return
+        }
+
+        if (message?.type === "detachBashTool") {
+          void detachBashTool(this.actionContext(), message.command, message.messageID)
+          return
+        }
+
+        if (message?.type === "stopPty") {
+          void stopPty(this.actionContext(), message.ptyID)
+          return
         }
 
         if (message?.type === "modelSelectionChanged") {
@@ -315,6 +328,7 @@ export class SessionPanelController implements vscode.Disposable {
       permissions: false,
       questions: false,
     }
+    this.ptySessions.clear()
     this.ref = ref
     this.key = key
     this.panel.title = panelTitle(ref.sessionId)
@@ -472,6 +486,82 @@ export class SessionPanelController implements vscode.Disposable {
     })
   }
 
+  private async postPtyUpdate() {
+    if (this.state.disposed || !this.ready) {
+      return
+    }
+    const sessions = Array.from(this.ptySessions.values())
+    await postToWebview(this.panel.webview, {
+      type: "ptyUpdate",
+      sessions,
+    })
+  }
+
+  private async syncPtySessions() {
+    const rt = this.mgr.get(this.ref.workspaceId)
+    if (!rt || rt.state !== "ready" || !rt.sdk) {
+      return
+    }
+    try {
+      const result = await rt.sdk.pty.list({ directory: rt.dir })
+      const sessions = result.data
+      if (Array.isArray(sessions)) {
+        this.ptySessions.clear()
+        for (const session of sessions) {
+          if (session && typeof session === "object" && "id" in session) {
+            this.ptySessions.set(session.id, session as PtySessionInfo)
+          }
+        }
+        await this.postPtyUpdate()
+      }
+    } catch {
+      // PTY list not available — silently skip
+    }
+  }
+
+  private handlePtyEvent(event: SessionEvent): boolean {
+    if (event.type === "pty.created") {
+      const props = event.properties as { info?: PtySessionInfo }
+      if (props.info) {
+        this.ptySessions.set(props.info.id, props.info)
+        void this.postPtyUpdate()
+      }
+      return true
+    }
+
+    if (event.type === "pty.updated") {
+      const props = event.properties as { info?: PtySessionInfo }
+      if (props.info) {
+        this.ptySessions.set(props.info.id, props.info)
+        void this.postPtyUpdate()
+      }
+      return true
+    }
+
+    if (event.type === "pty.exited") {
+      const props = event.properties as { id?: string; exitCode?: number }
+      if (props.id) {
+        const existing = this.ptySessions.get(props.id)
+        if (existing) {
+          this.ptySessions.set(props.id, { ...existing, status: "exited" })
+          void this.postPtyUpdate()
+        }
+      }
+      return true
+    }
+
+    if (event.type === "pty.deleted") {
+      const props = event.properties as { id?: string }
+      if (props.id) {
+        this.ptySessions.delete(props.id)
+        void this.postPtyUpdate()
+      }
+      return true
+    }
+
+    return false
+  }
+
   private isSubmitting() {
     return this.state.pendingSubmitCount > 0
   }
@@ -483,6 +573,10 @@ export class SessionPanelController implements vscode.Disposable {
 
     this.logRelevantEvent(event)
     this.markDeferredDirty(event)
+
+    if (this.handlePtyEvent(event)) {
+      return
+    }
 
     if (this.current && needsRefresh(event, this.current)) {
       await this.push(true, refreshReason(event, this.current))

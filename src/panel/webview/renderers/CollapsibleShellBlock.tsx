@@ -7,6 +7,8 @@ interface CollapsibleShellBlockProps {
   running?: boolean
   body: string
   className?: string
+  onKill?: () => void
+  onDetach?: () => void
 }
 
 export function CollapsibleShellBlock({
@@ -16,6 +18,8 @@ export function CollapsibleShellBlock({
   running = false,
   body,
   className = "",
+  onKill,
+  onDetach,
 }: CollapsibleShellBlockProps) {
   const [expanded, setExpanded] = React.useState(false)
 
@@ -34,6 +38,16 @@ export function CollapsibleShellBlock({
         </div>
         <div className="oc-shellBlockHeaderMeta">
           {running ? <span className="oc-shellBlockSpinner"><ToolStatus state="running" /></span> : null}
+          {running && onKill ? (
+            <button type="button" className="oc-toolRowKill" onClick={onKill} aria-label="Kill command" title="Kill (interrupts session)">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4.25" y="4.25" width="7.5" height="7.5" rx="1.5" className="oc-toolRowKillPath" /></svg>
+            </button>
+          ) : null}
+          {running && onDetach ? (
+            <button type="button" className="oc-toolRowDetach" onClick={onDetach} aria-label="Detach to background" title="Detach to background (restarts in PTY)">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4h5a3 3 0 0 1 3 3v5M4 4l3-3M4 4l3 3" className="oc-toolRowDetachPath" /></svg>
+            </button>
+          ) : null}
           <svg className="oc-shellBlockToggleIcon" viewBox="0 0 16 16" aria-hidden="true">
             <path d="M4 6l4 4 4-4" />
           </svg>
