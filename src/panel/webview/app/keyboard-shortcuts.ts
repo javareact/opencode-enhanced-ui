@@ -122,7 +122,7 @@ export function composerEnterIntent(options: ComposerEnterIntentOptions) {
     return "acceptAutocomplete" as const
   }
 
-  if (options.shiftKey) {
+  if (options.ctrlKey || options.metaKey) {
     return "newline" as const
   }
 

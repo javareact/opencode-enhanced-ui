@@ -169,7 +169,7 @@ describe("keyboard shortcuts", () => {
     }), false)
   })
 
-  test("uses different Enter behavior in normal and shell modes", () => {
+  test("uses different Enter behavior: plain Enter submits, Ctrl+Enter inserts newline", () => {
     assert.equal(composerEnterIntent({
       mode: "normal",
       key: "Enter",
@@ -188,7 +188,7 @@ describe("keyboard shortcuts", () => {
       shiftKey: false,
       hasAutocomplete: false,
       isImeComposing: false,
-    }), "submit")
+    }), "newline")
 
     assert.equal(composerEnterIntent({
       mode: "shell",
@@ -206,6 +206,26 @@ describe("keyboard shortcuts", () => {
       metaKey: false,
       ctrlKey: false,
       shiftKey: true,
+      hasAutocomplete: false,
+      isImeComposing: false,
+    }), "submit")
+
+    assert.equal(composerEnterIntent({
+      mode: "normal",
+      key: "Enter",
+      metaKey: false,
+      ctrlKey: true,
+      shiftKey: false,
+      hasAutocomplete: false,
+      isImeComposing: false,
+    }), "newline")
+
+    assert.equal(composerEnterIntent({
+      mode: "normal",
+      key: "Enter",
+      metaKey: true,
+      ctrlKey: false,
+      shiftKey: false,
       hasAutocomplete: false,
       isImeComposing: false,
     }), "newline")

@@ -1400,6 +1400,10 @@ export function App() {
         if (!targetMatches || activeAutocomplete) {
           return
         }
+        const sel = window.getSelection()
+        if (sel && !sel.isCollapsed && composerRef.current?.contains(sel.anchorNode)) {
+          return
+        }
         event.preventDefault()
         startLeaderPending()
         return
@@ -2090,6 +2094,9 @@ export function App() {
                             }
 
                             if (enterIntent === "newline") {
+                              if (!state.draft.trim()) {
+                                return
+                              }
                               event.preventDefault()
                               const next = replaceRangeWithText(state.composerParts, selection.start, selection.end, "\n")
                               const result = setComposerState(next.parts, "")
